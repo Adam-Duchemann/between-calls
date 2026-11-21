@@ -1,0 +1,19 @@
+{
+  "/*": "Don't modify slug - If required, do it using cli edit command",
+  "name": "Alby",
+  "slug": "alby",
+  "type": "alby_payment",
+  "logo": "icon.svg",
+  "url": "https://getalby.com",
+  "variant": "payment",
+  "categories": ["payment"],
+  "publisher": "Alby",
+  "email": "support@getalby.com",
+  "description": "Bitcoin and Nostr tools with options for accepting sats for meetings.",
+  "extendsFeature": "EventType",
+  "isTemplate": false,
+  "__createdUsingCli": true,
+  "__template": "event-type-app-card",
+  "dirName": "alby",
+  "isOAuth": false
+}

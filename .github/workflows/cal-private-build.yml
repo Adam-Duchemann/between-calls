@@ -1,0 +1,73 @@
+name: Between Calls full build
+
+on:
+  workflow_dispatch:
+    inputs:
+      public_origin:
+        description: HTTPS origin to bake into the review image
+        type: string
+        required: true
+        default: https://booking.example.com
+      upload_image:
+        description: Retain the image for one day (uses artifact storage)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cal-private-image
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      CAL_BUILD_ORIGIN: ${{ inputs.public_origin }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Validate origin and record build host
+        run: |
+          node -e 'const u = new URL(process.env.CAL_BUILD_ORIGIN); if (u.protocol !== "https:" || u.origin !== process.env.CAL_BUILD_ORIGIN || u.username || u.password || ["localhost", "127.0.0.1", "[::1]"].includes(u.hostname)) throw new Error("Use a public HTTPS origin without a path or trailing slash");'
+          mkdir -p "$RUNNER_TEMP/cal-build-receipt"
+          git rev-parse HEAD > "$RUNNER_TEMP/cal-build-receipt/commit.txt"
+          free -h > "$RUNNER_TEMP/cal-build-receipt/runner-memory.txt"
+          df -h > "$RUNNER_TEMP/cal-build-receipt/runner-disk.txt"
+      - name: Check build, startup and route isolation
+        run: node --test scripts/ci-policy.test.mjs scripts/build-cal.test.mjs scripts/prepare-next-generate.test.mjs scripts/start.test.mjs scripts/check-cal-env.test.mjs
+      - name: Build Linux image with forced type checks
+        run: |
+          started=$(date +%s)
+          docker build --platform linux/amd64 --progress=plain -f Dockerfile.cal \
+            --build-arg NEXT_PUBLIC_WEBAPP_URL="$CAL_BUILD_ORIGIN" \
+            -t cal-private:review . 2>&1 | tee "$RUNNER_TEMP/cal-build-receipt/build.log"
+          elapsed=$(( $(date +%s) - started ))
+          printf '%s\n' "$elapsed" > "$RUNNER_TEMP/cal-build-receipt/build-seconds.txt"
+          docker image inspect cal-private:review > "$RUNNER_TEMP/cal-build-receipt/image.json"
+      - name: Check standalone runtime and native dependencies
+        run: |
+          docker run --rm -i --entrypoint node cal-private:review --input-type=module < scripts/check-standalone.mjs
+      - name: Export optional review image
+        if: inputs.upload_image
+        run: docker save cal-private:review | gzip -1 > "$RUNNER_TEMP/cal-private-image.tar.gz"
+      - name: Retain build evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: cal-build-evidence-${{ github.run_id }}
+          path: ${{ runner.temp }}/cal-build-receipt/
+          retention-days: 7
+          if-no-files-found: warn
+      - name: Retain optional review image
+        if: success() && inputs.upload_image
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: cal-private-image-${{ github.run_id }}
+          path: ${{ runner.temp }}/cal-private-image.tar.gz
+          retention-days: 1
+          compression-level: 0
+          if-no-files-found: error

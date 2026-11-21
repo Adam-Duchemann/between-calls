@@ -1,0 +1,49 @@
+# syntax=docker/dockerfile:1
+FROM node:22-bookworm-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee AS builder
+WORKDIR /calcom
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates git python3 make g++ && rm -rf /var/lib/apt/lists/*
+RUN corepack enable
+COPY . .
+ARG NEXT_PUBLIC_WEBAPP_URL
+ENV NEXT_PUBLIC_WEBAPP_URL=$NEXT_PUBLIC_WEBAPP_URL \
+    NEXTAUTH_URL=$NEXT_PUBLIC_WEBAPP_URL \
+    NEXT_PUBLIC_WEBSITE_URL=$NEXT_PUBLIC_WEBAPP_URL \
+    CAL_MCP_BASE_URL=$NEXT_PUBLIC_WEBAPP_URL \
+    CAL_PRIVATE_INSTANCE=true \
+    NEXT_PUBLIC_DISABLE_SIGNUP=true \
+    ORGANIZATIONS_ENABLED=false \
+    GOOGLE_LOGIN_ENABLED=false \
+    NEXT_TELEMETRY_DISABLED=1 \
+    CALCOM_TELEMETRY_DISABLED=1 \
+    BUILD_STANDALONE=true \
+    SKIP_DB_MIGRATIONS=1 \
+    YARN_ENABLE_TELEMETRY=0 \
+    NEXTAUTH_SECRET=cal-build-placeholder-never-use-at-runtime \
+    CALENDSO_ENCRYPTION_KEY=00000000000000000000000000000000 \
+    DATABASE_URL=postgresql://build:build@127.0.0.1:1/cal \
+    DATABASE_DIRECT_URL=postgresql://build:build@127.0.0.1:1/cal
+RUN test -n "$NEXT_PUBLIC_WEBAPP_URL"
+RUN node .yarn/releases/yarn-4.12.0.cjs install --immutable
+RUN node .yarn/releases/yarn-4.12.0.cjs build:cal
+
+FROM node:22-bookworm-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee AS runner
+WORKDIR /calcom
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+ENV NODE_ENV=production \
+    HOSTNAME=0.0.0.0 \
+    PORT=3000 \
+    CAL_PRIVATE_INSTANCE=true \
+    NEXT_PUBLIC_DISABLE_SIGNUP=true \
+    ORGANIZATIONS_ENABLED=false \
+    NEXT_TELEMETRY_DISABLED=1 \
+    CALCOM_TELEMETRY_DISABLED=1
+COPY --from=builder --chown=node:node /calcom/apps/web/.next/standalone ./
+COPY --from=builder --chown=node:node /calcom/apps/web/.next/static ./apps/web/.next/static
+COPY --from=builder --chown=node:node /calcom/apps/web/public ./apps/web/public
+COPY --from=builder --chown=node:node /calcom/packages/i18n/locales ./packages/i18n/locales
+COPY --from=builder --chown=node:node /calcom/i18n.json ./i18n.json
+USER node
+EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+    CMD node -e "fetch('http://127.0.0.1:3000/.well-known/oauth-protected-resource').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+CMD ["node", "apps/web/server.js"]

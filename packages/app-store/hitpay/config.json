@@ -1,0 +1,19 @@
+{
+  "/*": "Don't modify slug - If required, do it using cli edit command",
+  "name": "HitPay",
+  "slug": "hitpay",
+  "type": "hitpay_payment",
+  "logo": "icon.svg",
+  "url": "https://hitpayapp.com",
+  "variant": "payment",
+  "categories": ["payment"],
+  "publisher": "HitPay",
+  "email": "support@hit-pay.com",
+  "description": "Accept payments for bookings through bank apps and e-wallets in Asia Pacific.",
+  "extendsFeature": "EventType",
+  "isTemplate": false,
+  "__createdUsingCli": true,
+  "__template": "event-type-app-card",
+  "dirName": "hitpay",
+  "isOAuth": true
+}

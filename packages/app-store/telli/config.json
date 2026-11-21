@@ -1,0 +1,20 @@
+{
+  "/*": "Don't modify slug - If required, do it using cli edit command",
+  "name": "telli",
+  "slug": "telli",
+  "type": "telli_automation",
+  "logo": "icon-dark.svg",
+  "url": "https://app.telli.com/",
+  "variant": "automation",
+  "categories": ["automation"],
+  "publisher": "telli technologies GmbH",
+  "email": "founders@telli.so",
+  "description": "Voice agents that can make calls and schedule appointments.",
+  "isTemplate": false,
+  "__createdUsingCli": true,
+  "__template": "link-as-an-app",
+  "externalLink": {
+    "url": "https://app.telli.com/",
+    "newTab": true
+  }
+}

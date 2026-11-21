@@ -1,0 +1,40 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "cal-private",
+  "main": "worker.ts",
+  "compatibility_date": "2026-11-13",
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": { "enabled": true, "head_sampling_rate": 0.1 },
+  "vars": {
+    "PUBLIC_APP_URL": "https://booking.example.com",
+    "EMAIL_FROM": "booking@example.com"
+  },
+  "secrets": {
+    "required": [
+      "DATABASE_URL",
+      "DATABASE_DIRECT_URL",
+      "NEXTAUTH_SECRET",
+      "CALENDSO_ENCRYPTION_KEY",
+      "RESEND_API_KEY",
+      "GOOGLE_API_CREDENTIALS"
+    ]
+  },
+  "containers": [
+    {
+      "class_name": "CalContainer",
+      "scheduling_policy": "durable_object",
+      "images": {
+        "base": {
+          "dockerfile": "../../Dockerfile.cal",
+          "build_context": "../..",
+          "build_vars": { "NEXT_PUBLIC_WEBAPP_URL": "https://booking.example.com" }
+        }
+      }
+    }
+  ],
+  "durable_objects": {
+    "bindings": [{ "name": "CAL_CONTAINER", "class_name": "CalContainer" }]
+  },
+  "exports": { "CalContainer": { "type": "durable-object", "storage": "sqlite" } }
+}

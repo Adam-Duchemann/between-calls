@@ -1,0 +1,73 @@
+.cal-booking-theme {
+  width: 100%;
+  color: var(--cal-text);
+  background: var(--cal-booking-background);
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.cal-booking-theme-canvas {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.cal-booking-theme h1,
+.cal-booking-theme [data-testid="event-title"],
+body[data-cal-booking-theme] [role="dialog"] h1 {
+  font-family: var(--cal-booking-heading-font);
+  font-weight: 500;
+  letter-spacing: -0.025em;
+}
+.cal-booking-theme [data-testid="event-title"] {
+  font-size: 1.75rem;
+  line-height: 1.2;
+}
+.cal-booking-theme [data-testid="booker-container"] {
+  border-radius: var(--cal-booking-radius);
+  box-shadow: 0 12px 42px color-mix(in srgb, var(--cal-text) 5%, transparent);
+}
+.cal-booking-theme :is(button, input, select, textarea),
+body[data-cal-booking-theme] [role="dialog"] :is(button, input, select, textarea) {
+  border-radius: var(--cal-booking-radius);
+}
+.cal-booking-theme :is(button, a, input, select, textarea):focus-visible,
+body[data-cal-booking-theme] [role="dialog"] :focus-visible {
+  outline: 2px solid var(--cal-brand);
+  outline-offset: 3px;
+}
+.cal-booking-brand-link {
+  color: var(--cal-brand);
+  border-radius: 4px;
+}
+.cal-booking-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 20px;
+  font-weight: 600;
+}
+.cal-booking-logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+@media (max-width: 640px) {
+  .cal-booking-brand {
+    font-size: 18px;
+  }
+  .cal-booking-theme [data-testid="event-title"] {
+    font-size: 1.5rem;
+  }
+}
+
+.cal-booking-theme [data-testid="success-page"] {
+  width: 100%;
+  height: auto;
+}
+.cal-booking-theme [data-testid="success-page"] [role="dialog"] {
+  border-radius: var(--cal-booking-radius);
+}
+.cal-booking-theme [data-testid="success-page"] h3 {
+  font-family: var(--cal-booking-heading-font);
+}
